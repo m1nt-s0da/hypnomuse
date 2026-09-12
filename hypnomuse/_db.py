@@ -2,8 +2,6 @@ from sqlite3 import connect
 import os
 import lancedb
 from lancedb.pydantic import LanceModel, Vector
-from pydantic import Field
-from uuid import uuid7, UUID
 from contextlib import contextmanager
 
 __all__ = ["open_sqlite", "open_lancedb", "LanceDBTrack", "LanceDBTextCache"]
@@ -59,7 +57,7 @@ def open_sqlite(data_dir: str, readonly: bool = False):
 
 class LanceDBTrack(LanceModel):
     id: str
-    vector: Vector(512)
+    vector: Vector(512)  # type: ignore[reportInvalidTypeForm]
     title: str
     artist: str | None = None
     album: str | None = None
@@ -67,7 +65,7 @@ class LanceDBTrack(LanceModel):
 
 class LanceDBTextCache(LanceModel):
     sha256: str
-    vector: Vector(512)
+    vector: Vector(512)  # type: ignore[reportInvalidTypeForm]
 
 
 @contextmanager

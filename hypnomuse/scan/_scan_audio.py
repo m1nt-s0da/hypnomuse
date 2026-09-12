@@ -3,6 +3,8 @@ import numpy as np
 from ._model import get_feature_extractor, get_model
 import torch
 from logging import getLogger
+from typing import cast
+from transformers.modeling_outputs import BaseModelOutputWithPooling
 
 __all__ = ["load_and_resample_audio", "get_audio_embedding", "scan_audio"]
 
@@ -48,7 +50,10 @@ def get_audio_embedding(
             chunk = samples[start : start + window_samples]
 
             inputs = feature_extractor(chunk, return_tensors="pt", sampling_rate=sr)
-            embed = model.get_audio_features(**inputs).pooler_output.squeeze(0)
+            model_output = cast(
+                BaseModelOutputWithPooling, model.get_audio_features(**inputs)
+            )
+            embed = cast(torch.Tensor, model_output.pooler_output).squeeze(0)
             embeddings.append(embed)
 
         embeddings = torch.stack(embeddings)

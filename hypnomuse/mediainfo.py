@@ -1,7 +1,5 @@
 import mutagen
-import mutagen.mp3
 import mutagen.id3
-import mutagen.wave
 import mutagen.mp4
 import mutagen.oggvorbis
 import chardet
@@ -36,12 +34,8 @@ def get_mediainfo(file: str):
     # -------------------------------------------------------------
     # 1. MP3 / WAV (ID3v2 タグ) の場合
     # -------------------------------------------------------------
-    if (
-        isinstance(audio, (mutagen.id3.ID3, mutagen.mp3.MP3, mutagen.wave.WAVE))
-        or hasattr(audio, "tags")
-        and isinstance(audio.tags, mutagen.id3.ID3)
-    ):
-        id3 = audio.tags if hasattr(audio, "tags") and audio.tags else audio
+    id3 = audio if isinstance(audio, mutagen.id3.ID3) else getattr(audio, "tags", None)
+    if isinstance(id3, mutagen.id3.ID3):
 
         # ID3フレーム ID: TIT2(タイトル), TPE1(アーティスト), TALB(アルバム)
         frame_map = {"title": "TIT2", "artist": "TPE1", "album": "TALB"}

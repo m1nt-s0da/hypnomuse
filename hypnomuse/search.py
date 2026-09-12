@@ -6,6 +6,8 @@ import torch
 from uuid import uuid7, UUID
 from dataclasses import dataclass
 import math
+from typing import cast
+from transformers.modeling_outputs import BaseModelOutputWithPooling
 
 
 def encode_query(query: str, data_dir: str) -> list[float]:
@@ -23,9 +25,16 @@ def encode_query(query: str, data_dir: str) -> list[float]:
 
     model = get_model()
     processor = get_processor()
-    inputs = processor(text=[query], return_tensors="pt", padding=True)
+    inputs = processor(
+        text=[query],
+        return_tensors="pt",  # type: ignore[reportCallIssue]
+        padding=True,  # type: ignore[reportCallIssue]
+    )
     with torch.no_grad():
-        vector_tensor: torch.Tensor = model.get_text_features(**inputs).pooler_output
+        model_output = cast(
+            BaseModelOutputWithPooling, model.get_text_features(**inputs)
+        )
+        vector_tensor = cast(torch.Tensor, model_output.pooler_output)
         norm = torch.linalg.norm(vector_tensor)
         if norm > 0:
             vector_tensor = vector_tensor / norm

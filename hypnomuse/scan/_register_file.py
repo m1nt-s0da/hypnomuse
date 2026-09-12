@@ -3,7 +3,7 @@ import os
 from hashlib import sha256
 from logging import getLogger
 from ._scan_audio import scan_audio
-from uuid import uuid7, UUID
+from uuid import uuid7
 from ..mediainfo import get_mediainfo
 
 __all__ = ["register_file"]
