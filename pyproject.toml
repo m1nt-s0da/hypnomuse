@@ -1,0 +1,28 @@
+[project]
+name = "hypnomuse"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "audioop-lts>=0.2.2",
+    "chardet>=7.6.0",
+    "dotenv>=0.9.9",
+    "lancedb>=0.38.0",
+    "mutagen>=1.48.1",
+    "numpy>=2.5.2",
+    "pydub>=0.25.1",
+    "torch>=2.14.0",
+    "tqdm>=4.70.0",
+    "transformers>=5.16.1",
+]
+
+[[tool.uv.index]]
+name = "torch"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "torch" }
+torchvision = { index = "torch" }
+torchaudio = { index = "torch" }
