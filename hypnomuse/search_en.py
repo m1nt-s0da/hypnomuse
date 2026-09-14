@@ -1,40 +1,58 @@
 import os
 from hashlib import sha256
-from ._db import open_lancedb, open_sqlite
+from ._db import open_lancedb, LanceDBTextCache, open_sqlite
+from .scan._model import get_processor, get_model
+import torch
 from uuid import uuid7, UUID
 from dataclasses import dataclass
 import math
 from typing import cast
-from slopmachine.embedding.ruri_v3_30m_int8 import RuriV3_30M_Int8
-import onnxruntime as ort
-import numpy as np
-import asyncio
-
-projection_onnx_file = os.path.dirname(__file__) + "/ruri-clap-projection.onnx"
+from transformers.modeling_outputs import BaseModelOutputWithPooling
 
 
-async def encode_query(query: str) -> list[float]:
-    ruri = RuriV3_30M_Int8()
-    tokens = await ruri.tokenize([f"クエリ: {query}"])
-    ruri_embeds = await ruri.encode(tokens.input_ids, tokens.attention_mask)
+def encode_query(query: str, data_dir: str) -> list[float]:
+    query_hash = sha256(query.encode("utf-8")).hexdigest()
+    with open_lancedb(data_dir) as lancedb:
+        text_cache_table = lancedb.open_table("text_cache")
+        response = (
+            text_cache_table.search()
+            .where(f"sha256 = '{query_hash}'")
+            .limit(1)
+            .to_list()
+        )
+        if response:
+            return response[0]["vector"]
 
-    session = ort.InferenceSession(
-        projection_onnx_file, providers=["CPUExecutionProvider"]
+    model = get_model()
+    processor = get_processor()
+    inputs = processor(
+        text=[query],
+        return_tensors="pt",  # type: ignore[reportCallIssue]
+        padding=True,  # type: ignore[reportCallIssue]
     )
-    model_input = session.get_inputs()[0]
-    model_output = session.get_outputs()[0]
-    projected_embeds = cast(
-        np.ndarray,
-        session.run(
-            [model_output.name],
-            {model_input.name: np.asarray(ruri_embeds, dtype=np.float32)},
-        )[0],
-    )
-    projected_embeds = projected_embeds / np.linalg.norm(
-        projected_embeds, axis=-1, keepdims=True
-    )
+    with torch.no_grad():
+        model_output = cast(
+            BaseModelOutputWithPooling, model.get_text_features(**inputs)
+        )
+        vector_tensor = cast(torch.Tensor, model_output.pooler_output)
+        norm = torch.linalg.norm(vector_tensor)
+        if norm > 0:
+            vector_tensor = vector_tensor / norm
 
-    return projected_embeds[0].tolist()
+        vector = vector_tensor.squeeze(0).cpu().tolist()
+
+        with open_lancedb(data_dir) as lancedb:
+            text_cache_table = lancedb.open_table("text_cache")
+            text_cache_table.add(
+                [
+                    LanceDBTextCache(
+                        sha256=query_hash,
+                        vector=vector,
+                    )
+                ]
+            )
+
+        return vector
 
 
 @dataclass
@@ -47,10 +65,10 @@ class FoundTrack:
     confidence: float
 
 
-async def search_tracks(
+def search_tracks(
     query: str, data_dir: str, *, count=10, confidence_gamma: float = 2.0
 ):
-    query_vector = await encode_query(query)
+    query_vector = encode_query(query, data_dir)
     with open_lancedb(data_dir) as lancedb:
         track_table = lancedb.open_table("tracks")
         candidate_tracks = (
@@ -114,7 +132,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     print(f"Query: {args.query}")
-    result = asyncio.run(search_tracks(**vars(args)))
+    result = search_tracks(**vars(args))
     for track in result:
         print(
             f"{track.confidence*100:06.2f}% ({track.distance:.2f}) {track.id}: {track.title} / {track.artist} / {track.album}"
