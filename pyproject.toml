@@ -13,6 +13,7 @@ dependencies = [
     "numpy>=2.5.2",
     "pydub>=0.25.1",
     "slopmachine-embedding>=0.1.0a1",
+    "slopmachine-embedding-ruri-v3-130m-int8>=0.1.0a1",
     "torch>=2.14.0",
     "tqdm>=4.70.0",
     "transformers>=5.16.1",
@@ -32,6 +33,7 @@ torch = { index = "torch" }
 torchvision = { index = "torch" }
 torchaudio = { index = "torch" }
 slopmachine-embedding = { index = "slopmachine" }
+slopmachine-embedding-ruri-v3-130m-int8 = { index = "slopmachine" }
 
 [tool.uv]
-exclude-newer-package = { slopmachine-embedding = false }
+exclude-newer-package = { slopmachine-embedding = false, slopmachine-embedding-ruri-v3-130m-int8=false }

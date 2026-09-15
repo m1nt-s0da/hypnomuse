@@ -5,7 +5,7 @@ from uuid import uuid7, UUID
 from dataclasses import dataclass
 import math
 from typing import cast
-from slopmachine.embedding.ruri_v3_30m_int8 import RuriV3_30M_Int8
+from slopmachine.embedding.ruri_v3_130m_int8 import RuriV3_130M_Int8
 import onnxruntime as ort
 import numpy as np
 import asyncio
@@ -14,27 +14,25 @@ projection_onnx_file = os.path.dirname(__file__) + "/ruri-clap-projection.onnx"
 
 
 async def encode_query(query: str) -> list[float]:
-    ruri = RuriV3_30M_Int8()
+    # if len(query) < 10:
+    #     query = f"{query}の雰囲気を持つ音楽や楽曲"
+    ruri = RuriV3_130M_Int8()
     tokens = await ruri.tokenize([f"クエリ: {query}"])
     ruri_embeds = await ruri.encode(tokens.input_ids, tokens.attention_mask)
 
-    session = ort.InferenceSession(
-        projection_onnx_file, providers=["CPUExecutionProvider"]
-    )
+    session = ort.InferenceSession(projection_onnx_file)
     model_input = session.get_inputs()[0]
     model_output = session.get_outputs()[0]
-    projected_embeds = cast(
+    [projected_embeds] = cast(
         np.ndarray,
         session.run(
             [model_output.name],
             {model_input.name: np.asarray(ruri_embeds, dtype=np.float32)},
         )[0],
     )
-    projected_embeds = projected_embeds / np.linalg.norm(
-        projected_embeds, axis=-1, keepdims=True
-    )
+    projected_embeds = projected_embeds / np.linalg.norm(projected_embeds)
 
-    return projected_embeds[0].tolist()
+    return projected_embeds.tolist()
 
 
 @dataclass
@@ -55,6 +53,7 @@ async def search_tracks(
         track_table = lancedb.open_table("tracks")
         candidate_tracks = (
             track_table.search(query_vector)
+            .metric("dot")
             .select(["id", "_distance"])
             .limit(count)
             .to_list()

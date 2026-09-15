@@ -34,12 +34,12 @@ def encode_query(query: str, data_dir: str) -> list[float]:
         model_output = cast(
             BaseModelOutputWithPooling, model.get_text_features(**inputs)
         )
-        vector_tensor = cast(torch.Tensor, model_output.pooler_output)
+        vector_tensor = cast(torch.Tensor, model_output.pooler_output).squeeze(0).cpu()
         norm = torch.linalg.norm(vector_tensor)
         if norm > 0:
             vector_tensor = vector_tensor / norm
 
-        vector = vector_tensor.squeeze(0).cpu().tolist()
+        vector = vector_tensor.tolist()
 
         with open_lancedb(data_dir) as lancedb:
             text_cache_table = lancedb.open_table("text_cache")
@@ -73,6 +73,7 @@ def search_tracks(
         track_table = lancedb.open_table("tracks")
         candidate_tracks = (
             track_table.search(query_vector)
+            .metric("dot")
             .select(["id", "_distance"])
             .limit(count)
             .to_list()

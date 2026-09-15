@@ -3,11 +3,12 @@ revision = 3
 requires-python = ">=3.14"
 
 [options]
-exclude-newer = "2026-09-07T18:26:57.4151209Z"
+exclude-newer = "2026-09-08T09:10:16.857797Z"
 exclude-newer-span = "P1W"
 
 [options.exclude-newer-package]
 slopmachine-embedding = false
+slopmachine-embedding-ruri-v3-130m-int8 = false
 
 [[package]]
 name = "annotated-doc"
@@ -350,6 +351,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pydub" },
     { name = "slopmachine-embedding" },
+    { name = "slopmachine-embedding-ruri-v3-130m-int8" },
     { name = "torch" },
     { name = "tqdm" },
     { name = "transformers" },
@@ -365,6 +367,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.5.2" },
     { name = "pydub", specifier = ">=0.25.1" },
     { name = "slopmachine-embedding", specifier = ">=0.1.0a1", index = "https://m1nt-s0da.github.io/slopmachine-pypi/" },
+    { name = "slopmachine-embedding-ruri-v3-130m-int8", specifier = ">=0.1.0a1", index = "https://m1nt-s0da.github.io/slopmachine-pypi/" },
     { name = "torch", specifier = ">=2.14.0", index = "https://download.pytorch.org/whl/cu130" },
     { name = "tqdm", specifier = ">=4.70.0" },
     { name = "transformers", specifier = ">=5.16.1" },
@@ -1052,6 +1055,19 @@ dependencies = [
 ]
 wheels = [
     { url = "https://storage.googleapis.com/slopmachine/pypi/slopmachine-embedding/slopmachine_embedding-0.1.0a1-py3-none-any.whl", hash = "sha256:668a70eb9eb5572e13781996edcf839eb1c067e9b1e9feb017b5b0826d8ca5af" },
+]
+
+[[package]]
+name = "slopmachine-embedding-ruri-v3-130m-int8"
+version = "0.1.0a1"
+source = { registry = "https://m1nt-s0da.github.io/slopmachine-pypi/" }
+dependencies = [
+    { name = "onnxruntime" },
+    { name = "slopmachine-embedding" },
+    { name = "tokenizers" },
+]
+wheels = [
+    { url = "https://storage.googleapis.com/slopmachine/pypi/slopmachine-embedding-ruri-v3-130m-int8/slopmachine_embedding_ruri_v3_130m_int8-0.1.0a1-py3-none-any.whl", hash = "sha256:dac74d6307bd56943e76e32cde14ed0315e4bd87a52c0c0b84c15debdd9c2cfa" },
 ]
 
 [[package]]
