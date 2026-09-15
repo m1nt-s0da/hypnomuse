@@ -42,7 +42,7 @@ class FoundTrack:
     artist: str
     album: str
     distance: float
-    confidence: float
+    similarity: float
 
 
 async def search_tracks(
@@ -93,7 +93,7 @@ async def search_tracks(
             artist=track_dict[UUID(result["id"])]["artist"],
             album=track_dict[UUID(result["id"])]["album"],
             distance=result["_distance"],
-            confidence=math.exp(-confidence_gamma * result["_distance"]),
+            similarity=(-result["_distance"] + 1) / 2,
         )
         for result in candidate_tracks
     ]
@@ -116,5 +116,5 @@ if __name__ == "__main__":
     result = asyncio.run(search_tracks(**vars(args)))
     for track in result:
         print(
-            f"{track.confidence*100:06.2f}% ({track.distance:.2f}) {track.id}: {track.title} / {track.artist} / {track.album}"
+            f"{track.similarity*100:06.2f}% ({track.distance:.2f}) {track.id}: {track.title} / {track.artist} / {track.album}"
         )
